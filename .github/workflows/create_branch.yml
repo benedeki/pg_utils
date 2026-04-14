@@ -1,0 +1,106 @@
+name: Create Branch From Issue Comment
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  create-branch:
+    if: startsWith(github.event.comment.body, '/create-branch')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Determine prefix based on labels
+        id: prefix
+        run: |
+          LABELS=$(echo '${{ toJson(github.event.issue.labels) }}' | tr '[:upper:]' '[:lower:]')
+
+          if echo "$LABELS" | grep -q '"bug"'; then
+            PREFIX="bugfix"
+          elif echo "$LABELS" | grep -q '"documentation"'; then
+            PREFIX="doc"
+          elif echo "$LABELS" | grep -q '"infrastructure"'; then
+            PREFIX="infra"
+          else
+            PREFIX="feature"
+          fi
+
+          echo "prefix=$PREFIX" >> $GITHUB_OUTPUT
+
+      - name: Build branch name
+        id: vars
+        run: |
+          ISSUE_NUMBER=${{ github.event.issue.number }}
+          ISSUE_TITLE="${{ github.event.issue.title }}"
+
+          # slugify title
+          SLUG=$(echo "$ISSUE_TITLE" \
+            | tr '[:upper:]' '[:lower:]' \
+            | sed -E 's/[^a-z0-9]+/-/g' \
+            | sed -E 's/^-+|-+$//g')
+
+          BRANCH="${{ steps.prefix.outputs.prefix }}/${ISSUE_NUMBER}-${SLUG}"
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+
+      - name: Resolve default branch
+        id: base
+        run: |
+          echo "name=${{ github.event.repository.default_branch }}" >> $GITHUB_OUTPUT
+
+      - name: Get base branch SHA
+        id: sha
+        run: |
+          SHA=$(gh api repos/${{ github.repository }}/git/ref/heads/${{ steps.base.outputs.name }} --jq .object.sha)
+          echo "sha=$SHA" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
+      - name: Get node IDs
+        id: nodes
+        run: |
+          ISSUE_NODE_ID=$(gh api repos/${{ github.repository }}/issues/${{ github.event.issue.number }} --jq .node_id)
+          REPO_NODE_ID=$(gh api repos/${{ github.repository }} --jq .node_id)
+          echo "issue_node_id=$ISSUE_NODE_ID" >> $GITHUB_OUTPUT
+          echo "repo_node_id=$REPO_NODE_ID"   >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create branch
+        run: |
+          gh api graphql -f query='
+            mutation($issueId: ID!, $oid: GitObjectID!, $name: String!, $repoId: ID!) {
+              createLinkedBranch(input: {
+                issueId:      $issueId,
+                oid:          $oid,
+                name:         $name,
+                repositoryId: $repoId
+              }) {
+                linkedBranch { id }
+              }
+            }' \
+            -f issueId="${{ steps.nodes.outputs.issue_node_id }}" \
+            -f oid="${{ steps.sha.outputs.sha }}" \
+            -f name="${{ steps.vars.outputs.branch }}" \
+            -f repoId="${{ steps.nodes.outputs.repo_node_id }}"
+        env:
+          GH_TOKEN: ${{ secrets.PAT_REPO_PROJECT_DISCUSS }}
+
+      - name: Build branch URLs
+        id: urls
+        run: |
+          ENCODED_NEW=$(printf '%s' "${{ steps.vars.outputs.branch }}" | jq -sRr @uri)
+          ENCODED_BASE=$(printf '%s' "${{ steps.base.outputs.name }}" | jq -sRr @uri)
+          echo "new_url=https://github.com/${{ github.repository }}/tree/$ENCODED_NEW" >> $GITHUB_OUTPUT
+          echo "base_url=https://github.com/${{ github.repository }}/tree/$ENCODED_BASE" >> $GITHUB_OUTPUT
+
+      - name: Comment back
+        run: |
+          gh api repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments \
+            -f body="Branch [\`${{ steps.vars.outputs.branch }}\`](${{ steps.urls.outputs.new_url }}) created from [\`${{ steps.base.outputs.name }}\`](${{ steps.urls.outputs.base_url }})."
+        env:
+          GH_TOKEN: ${{ secrets.PAT_REPO_PROJECT_DISCUSS }}
