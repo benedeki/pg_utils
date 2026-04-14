@@ -130,7 +130,7 @@ Tests will be added in the future using the [Balta](https://github.com/AbsaOSS/b
   * Add a section **Release notes** to the PR description:
     * The release notes will be utilized by the automation to generate the release notes for the release, using [generate-release-notes action](https://github.com/AbsaOSS/generate-release-notes). 
     * Add a line for each change that should be included in the release notes, prefixed by a bullet point. The line should be concise and clear, describing the change in a way that is suitable for release notes.
-    * If the change doesn't need to be included in the release notes (like a documentation change), add a label `No RN` to the PR
+    * If the change doesn't need to be included in the release notes (like a documentation change), add a label `no RN` to the PR
   * Connect the PR to the _Issue_
 
 **Thanks!**
