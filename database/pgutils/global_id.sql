@@ -51,7 +51,7 @@ BEGIN
 
         RAISE NOTICE 'Sequence submitted with command: `%`', _command;
 
-        ALTER SEQUENCE utils.global_id_seq OWNER TO util_functions_owner;
+        ALTER SEQUENCE pgutils.global_id_seq OWNER TO pgutils_owner;
     ELSE
         RAISE NOTICE 'Sequence % already exists. Skipping creation.', _sequence_name;
         RETURN;

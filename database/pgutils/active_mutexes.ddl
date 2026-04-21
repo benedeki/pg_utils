@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-CREATE UNLOGGED TABLE pgutils.active_mutexes
+CREATE UNLOGGED TABLE IF NOT EXISTS pgutils.active_mutexes
 (
     mutex_name TEXT NOT NULL,
     CONSTRAINT active_mutexes_pk PRIMARY KEY (mutex_name)

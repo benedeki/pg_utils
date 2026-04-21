@@ -13,9 +13,10 @@
  * limitations under the License.
  */
 
-CREATE OR REPLACE FUNCTION pgarray.is_unique (
-       i_array              ANYARRAY,
-       i_nulls_distinct     BOOLEAN DEFAULT false
+CREATE OR REPLACE FUNCTION pgarray.is_unique(
+    IN  i_array             ANYARRAY,
+    IN  i_nulls_distinct    BOOLEAN DEFAULT false,
+    OUT is_unique           BOOLEAN
 )
 -------------------------------------------------------------------------------
 --
@@ -27,21 +28,37 @@ CREATE OR REPLACE FUNCTION pgarray.is_unique (
 -- Parameters:
 --
 --      i_array             - The array of any type to check
---      i_nulls_distinct    - if TRUE, NULL values are treated as distinct, otherwise they are considered duplicates
+--      i_nulls_distinct    - if TRUE, NULL values are treated as distinct, otherwise they are considered duplicates if
+--                            appearing more than once in the array. The default value is FALSE.
 --
 -- Returns:
---      TRUE                - if the array contains only unique values
---      FALSE               - if the array has at least one duplicate value
+--      is_unique           - TRUE if the array contains only unique values, FALSE if the array has at least one duplicate value
 --
 -------------------------------------------------------------------------------
 RETURNS BOOLEAN AS $$
-    SELECT cardinality($1) = (
-        SELECT COUNT(DISTINCT x)
-        FROM unnest($1) AS x
-        WHERE i_nulls_distinct OR 
-            x IS NOT NULL
-    );
-$$ LANGUAGE SQL IMMUTABLE SECURITY INVOKER;
+DECLARE
+    _cardinality    INTEGER;
+    _distinct_count INTEGER;
+    _null_count     INTEGER;
+BEGIN
+    _cardinality = cardinality(i_array);
+
+    SELECT
+        count(*) FILTER (WHERE x IS NULL),
+        count(DISTINCT x)
+    FROM unnest(i_array) x
+    INTO _null_count, _distinct_count;
+
+    IF i_nulls_distinct THEN
+        is_unique := _cardinality = _distinct_count + _null_count;
+    ELSE
+        is_unique := (_cardinality = _distinct_count + _null_count) AND
+            (_null_count <= 1);
+    END IF;
+
+    RETURN;
+END
+$$ LANGUAGE plpgsql IMMUTABLE SECURITY INVOKER;
 
 ALTER FUNCTION pgarray.is_unique (ANYARRAY, BOOLEAN) OWNER TO pgutils_owner;
 
