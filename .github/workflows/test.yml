@@ -24,7 +24,7 @@ on:
     types: [ opened, synchronize, reopened ]
 
 env:
-  postgres-password: "ChangeMe!".
+  postgres-password: "ChangeMe!"
 
 jobs:
   test-database-and-server:
