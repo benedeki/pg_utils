@@ -23,7 +23,7 @@ $do$
             RAISE NOTICE 'Role "pgutils_tester" already exists. Skipping.';
         ELSE
             CREATE ROLE pgutils_tester
-                PASSWORD '"ChangeMe!'
+                PASSWORD 'ChangeMe!'
                 NOSUPERUSER
                 INHERIT
                 NOCREATEDB
