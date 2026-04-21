@@ -61,7 +61,6 @@ jobs:
         env:
           PGPASSWORD:  ${{ env.postgres-password }}
         run: |
-          psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE pgutils_db WITH ENCODING = 'UTF8' CONNECTION LIMIT = -1;"
           psql -h 127.0.0.1 -U postgres -d pgutils_db -f install.psql -v ON_ERROR_STOP=1
           psql -h 127.0.0.1 -U postgres -d pgutils_db -f tests/src/test/resources/test_user.ddl -v ON_ERROR_STOP=1
 
