@@ -97,7 +97,19 @@ during long operations.
 
 ## Tests
 
-Tests will be added in the future using the [Balta](https://github.com/AbsaOSS/balta) library.
+Tests are written using the [Balta](https://github.com/AbsaOSS/balta) Scala library, and the whole test suites is and sbt project.
+
+To run the tests, you need to have sbt installed and configured on your machine. Then you can use the following command 
+in the root directory of the project to run all tests:
+
+```bash
+psql -h host -p port -U user -d dbname -f tests/src/test/resources/test_user.ddl
+psql -h host -p port -U user -d dbname  -c "GRANT CONNECT ON DATABASE [dbname] TO pgutils_tester;"
+sbt test
+```
+
+where you need to replace `host`, `port`, `user` and `dbname` with the appropriate values for your Postgres database
+(the same values that were used for installation).
 
 ## Contributing to PG Utils
 
