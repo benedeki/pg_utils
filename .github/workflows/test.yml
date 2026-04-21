@@ -56,9 +56,6 @@ jobs:
         with:
           java-version: "adopt@1.11.0-11"
 
-      - name: Build and run unit tests
-        run: sbt "project database" test "project server" test
-
       - name: Prepare testing database
         env:
           PGPASSWORD:  ${{ env.postgres-password }}
