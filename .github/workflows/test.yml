@@ -59,7 +59,7 @@ jobs:
       - name: Prepare testing database
         env:
           PGPASSWORD:  ${{ env.postgres-password }}
-        run: psql -U postgres -d pgutils_db -f install.psql -v ON_ERROR_STOP=1
+        run: psql -h 127.0.0.1 -U postgres -d pgutils_db -f install.psql -v ON_ERROR_STOP=1
 
       - name: Run tests
         run: sbt test
