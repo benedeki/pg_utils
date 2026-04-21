@@ -45,32 +45,14 @@ BEGIN
             INSERT INTO pgutils.active_mutexes (mutex_name)
             VALUES (i_mutex_name)
             ON CONFLICT DO nothing;
-    
+
             -- this is to ensure the lock is re-applied after the conflict has been resolved
-            PERFORM lock_mutex(i_mutex_name);
+            PERFORM pgutils.lock_mutex(i_mutex_name);
     END IF;
 
     RETURN;
 END;
 $$ LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
-ALTER FUNCTION pgutils.lock_operational_mutex(TEXT) OWNER TO pgutils_owner;
-GRANT EXECUTE ON FUNCTION pgutils.lock_operational_mutex(TEXT) TO public;
-
-
-CREATE UNLOGGED TABLE pgutils.active_mutexes
-(
-    mutex_name TEXT NOT NULL,
-    CONSTRAINT active_mutexes_pk PRIMARY KEY (mutex_name)
-);
-
-COMMENT ON TABLE pgutils.active_mutexes IS
-    'Used when you want to allow only one actor to modify some table and once its operation is done, it should release the lock. '
-        'A row added into this table represents a registration of such operation.';
-
-COMMENT ON COLUMN pgutils.active_mutexes.mutex_name IS
-    'Unique representation of a given operation, usually a DB function name that wants to avoid races';
-
-ALTER TABLE pgutils.active_mutexes OWNER to pgutils_owner;
-
-
+ALTER FUNCTION pgutils.lock_mutex(TEXT) OWNER TO pgutils_owner;
+GRANT EXECUTE ON FUNCTION pgutils.lock_mutex(TEXT) TO public;

@@ -55,10 +55,10 @@ documentation section below.
 
 Checks if the array contains only unique values
 
-| Parameter           | Type              | Description                                                                            |
-|---------------------|-------------------|----------------------------------------------------------------------------------------|
-| `i_array`           | array of any type | The array of any type to check                                                         |
-| `i_nulls_distinct`  | BOOLEAN           | if TRUE, NULL values are treated as distinct, otherwise they are considered duplicates |
+| Parameter           | Type              | Description                                                                                                                                                  |
+|---------------------|-------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `i_array`           | array of any type | The array of any type to check                                                                                                                               |
+| `i_nulls_distinct`  | BOOLEAN           | if TRUE, NULL values are treated as distinct, otherwise they are considered duplicates if appearing more than once in the array. The default value is FALSE. |
 
 | Returns      |                                                                                                            |
 |--------------|------------------------------------------------------------------------------------------------------------|
